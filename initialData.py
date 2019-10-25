@@ -8,6 +8,18 @@ np.set_printoptions(linewidth=desired_width)
 pd.set_option('display.max_columns', 100)
 
 
+# define a fx to calculate monthly returns from daily returns for US IG/HY Datasets
+def total_return_from_returns(returns):
+    """
+    Returns the return between the first and last value of a dataframe; this will be used
+    for calculating the EOM data returns for US HY/IG Corporate bond data given daily returns
+
+    :param returns: panda.Series or pandas.DataFrame
+    :return:
+    """
+    return ((returns + 1).prod() - 1) / 100
+
+
 # Start w/ Data
 class DataLoader:
     """
@@ -39,14 +51,20 @@ class DataLoader:
 
         # Intermediate dataframes loaded
         self.Macro_Var_data = None
-        self.return_data = None
+        self.excess_return_data = None
         self.VIX_data = None
         self.CAPE_data = None
         self.FRED_data = None
 
+        # eom data needed
+        self.Macro_Var_data_daily = None
+        self.Macro_Var_data_eom = None
+        self.VIX_data_eom = None
+
         # Final dataframes loaded
         self.merged_data = None
-        self.target_data = None
+        self.merged_data_eom = None
+        self.excess_return_data_eom = None
 
     def load_data(self):
         """
@@ -67,8 +85,9 @@ class DataLoader:
                                        'L98TRUU Index', 'SPX Index - Last Measure']
 
         # Deal with returns data
-        self.return_data = pd.read_excel(self.retPath, self.retPathSht, header=1)
-        self.return_data.columns = ['Value Date', 'HY Daily Total Return', 'HY Excess Return']
+        self.excess_return_data = pd.read_excel(self.retPath, self.retPathSht, header=1)
+        self.excess_return_data.columns = ['Value Date', 'HY Daily Total Return', 'HY Excess Return']
+        self.excess_return_data.drop('HY Daily Total Return', axis=1, inplace=True)
         # print("Pre-preprocessed factor data:")
         # print(self.raw_data_1.head(10))
         # print("Pre-preprocessed return data:")
@@ -117,9 +136,9 @@ class DataLoader:
         self.Macro_Var_data['Dates'] = pd.to_datetime(self.Macro_Var_data['Dates'].astype(str),
                                                       format='%Y-%m-%d')
         self.Macro_Var_data.set_index('Dates', inplace=True)
-        self.return_data['Value Date'] = pd.to_datetime(self.return_data['Value Date'].astype(str),
-                                                        format='%Y-%m-%d')
-        self.return_data.set_index('Value Date', inplace=True)
+        self.excess_return_data['Value Date'] = pd.to_datetime(self.excess_return_data['Value Date'].astype(str),
+                                                               format='%Y-%m-%d')
+        self.excess_return_data.set_index('Value Date', inplace=True)
         self.VIX_data['Date'] = pd.to_datetime(self.VIX_data['Date'].astype(str),
                                                format='%Y-%m-%d')
         self.VIX_data.set_index('Date', inplace=True)
@@ -130,6 +149,19 @@ class DataLoader:
                                                 format='%Y-%m-%d')
         self.FRED_data.set_index('Date', inplace=True)
 
+        # Before we merge the data sets, we need to take away the daily data until
+        # we are left with EoM data only.
+
+        self.Macro_Var_data_daily = pd.merge(self.Macro_Var_data, self.VIX_data, how='outer', right_index=True,
+                                             left_index=True)
+
+        # Macro-Variables - daily data --> eom data
+        self.Macro_Var_data_eom = self.Macro_Var_data.resample('MS').last()
+        # print(self.Macro_Var_data_eom.head(10))
+
+        # VIX - daily data --> eom data
+        self.VIX_data_eom = self.VIX_data.resample('MS').last()
+
         # Merge data on date column to a make a merged data frame
         # self.merged_data = pd.merge(self.Macro_Var_data, self.return_data, right_on='Value Date',
         #                            left_on='Dates')
@@ -138,21 +170,23 @@ class DataLoader:
 
         # Merge all 4 data sets (VIX, CAPE, FRED, and MACRO_VAR's) to create a massive factor dataset for feature
         # engineering.
-        self.merged_data = pd.merge(self.VIX_data, self.CAPE_data, how='outer', right_index=True, left_index=True)
-        self.merged_data = pd.merge(self.merged_data, self.Macro_Var_data, how='outer', right_index=True,
-                                    left_index=True)
-        self.merged_data = pd.merge(self.merged_data, self.FRED_data, how='outer', right_index=True, left_index=True)
+        self.merged_data_eom = pd.merge(self.VIX_data_eom, self.CAPE_data, how='outer', right_index=True,
+                                        left_index=True)
+        self.merged_data_eom = pd.merge(self.merged_data_eom, self.Macro_Var_data_eom, how='outer', right_index=True,
+                                        left_index=True)
+        self.merged_data_eom = pd.merge(self.merged_data_eom, self.FRED_data, how='outer', right_index=True,
+                                        left_index=True)
         # print(self.merged_data.columns)
         # print(self.merged_data.head(100))
 
         # Restrict the dataset size by only returning all years >= 1995
-        self.merged_data = self.merged_data['1998-09-01':]
-        print(self.merged_data.head(100))
+        self.Macro_Var_data_daily = self.Macro_Var_data_daily['1998-09-01':]
+        self.Macro_Var_data_daily.index.name= 'Date'
+        self.merged_data_eom = self.merged_data_eom['1998-09-01':]
+        # print(self.merged_data.head(100))
 
         # RETURN DATA
-
-        # Convert daily to monthly
-        self.target_data = self.return_data
+        self.excess_return_data = self.excess_return_data[:'1999-09-01']
 
     def output_csv(self):
         """
@@ -164,11 +198,11 @@ class DataLoader:
                     2 - target data
         """
         # Output a csv for merged data
-        return self.merged_data.to_csv('merged_data.csv'), self.target_data.to_csv('target_data.csv')
+        return self.merged_data_eom.to_csv('merged_data_eom.csv'), self.excess_return_data.to_csv(
+            'excess_return_data.csv'), self.Macro_Var_data_daily.to_csv('macro_var_daily.csv')
 
 
 myData = DataLoader()
 myData.load_data()
 myData.preprocess_data()
 myData.output_csv()
-
