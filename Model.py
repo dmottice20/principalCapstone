@@ -105,12 +105,12 @@ def magnitude(df, feature, mag):
 # MODELLLLLLLLL
 
 # daily return data
-return_data = pd.read_csv('../Data/excess_return_data.csv')
+return_data = pd.read_csv('excess_return_data.csv')
 return_data['Value Date'] = pd.to_datetime(return_data['Value Date'])
 return_data.set_index('Value Date', inplace=True)
 
 # Daily feature data
-daily_data = pd.read_csv('../Data/macro_var_daily.csv')
+daily_data = pd.read_csv('macro_var_daily.csv')
 daily_data['Date'] = pd.to_datetime(daily_data['Date'])
 daily_data.set_index('Date', inplace=True)
 
