@@ -1,7 +1,4 @@
 # principalCapstone
-<<<<<<< HEAD
-Platform to share and update versions of code USAFA Capstone (Fall 2019 - Spring 2020)
-=======
 
 ## Project Overview: Fixed Income Portfolio Strategy using Machine Learning
 
