@@ -2,6 +2,7 @@ from managers.data_manager import FREDDataManager
 from managers.data_processing import DataProcessor
 import json
 import pandas as pd
+from managers.cross_validation import TimeSeriesCrossValidator
 
 
 USE_SAVED_CSV = True
@@ -32,3 +33,31 @@ else:
     print(processed_data.describe())
     print("Shape of the processed data: ", processed_data.shape)
 
+# Perform cross-validation
+cv = TimeSeriesCrossValidator(processed_data)
+
+# For rolling window
+rolling_splits = cv.perform_cross_validation(method='rolling', initial_train_size=10, step_size=10, test_size=5)
+
+# For sliding window
+sliding_splits = cv.perform_cross_validation(method='sliding', window_size=25, step_size=10, test_size=5)
+
+# Print information about the splits
+print(f"Number of rolling window splits: {len(rolling_splits)}")
+print(f"Number of sliding window splits: {len(sliding_splits)}")
+
+# You can now use these splits for your model training and evaluation
+for i, (train, test) in enumerate(rolling_splits):
+    print(f"Rolling split {i+1}:")
+    print(f"Train shape: {train.shape}, Test shape: {test.shape}")
+    print(f"Train date range: {train.index.min()} to {train.index.max()}")
+    print(f"Test date range: {test.index.min()} to {test.index.max()}")
+    print()
+
+# Similarly, you can iterate through sliding_splits
+for i, (train, test) in enumerate(sliding_splits):
+    print(f"Sliding split {i+1}:")
+    print(f"Train shape: {train.shape}, Test shape: {test.shape}")
+    print(f"Train date range: {train.index.min()} to {train.index.max()}")
+    print(f"Test date range: {test.index.min()} to {test.index.max()}")
+    print()
