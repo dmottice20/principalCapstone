@@ -47,7 +47,7 @@ class DataProcessor:
         
         logging.info("Generated direction indicators for return columns")
 
-    def process_data(self, target_columns, save_csv=False, csv_filename='processed_data.csv'):
+    def process_data(self, target_columns, missing_data="impute", save_csv=False, csv_filename='processed_data.csv'):
         """
         Main method to process the data.
         
@@ -59,7 +59,6 @@ class DataProcessor:
         self.transform_to_eom()
         self.calculate_returns(target_columns)
         self.generate_direction_indicators(target_columns)
-        
         if save_csv:
             self.save_to_csv(csv_filename)
         

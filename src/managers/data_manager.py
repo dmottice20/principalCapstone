@@ -49,6 +49,7 @@ class FREDDataManager:
     
         # Find the maximum earliest date
         max_earliest_date = max(max(earliest_dates.values()), datetime.strptime(start_date, '%Y-%m-%d').date())
+        print("Here are the list of dates: ", earliest_dates)
         
         # Set the start date to the maximum earliest date
         start_date = max_earliest_date
