@@ -47,7 +47,7 @@ class DataProcessor:
         
         logging.info("Generated direction indicators for return columns")
 
-    def process_data(self, target_columns, missing_data="impute", save_csv=False, csv_filename='processed_data.csv'):
+    def process_data(self, target_columns, save_csv=False, csv_filename='processed_data.csv'):
         """
         Main method to process the data.
         
@@ -72,9 +72,3 @@ class DataProcessor:
         """
         self.data.to_csv(filename, index=True)
         logging.info(f"Processed data saved to {filename}")
-
-# Example usage:
-# Assuming 'all_data' is the output from FREDDataManager
-# processor = DataProcessor(all_data)
-# target_columns = ['High_Yield', 'Investment_Grade', 'Treasury_3M', 'Treasury_6M', 'Treasury_1Y', 'Treasury_2Y', 'Treasury_3Y', 'Treasury_5Y', 'Treasury_7Y', 'Treasury_10Y', 'Treasury_20Y', 'Treasury_30Y']
-# processed_data = processor.process_data(target_columns, save_csv=True, csv_filename='processed_data.csv')

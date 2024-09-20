@@ -50,5 +50,3 @@ Contributions, suggestions, and feedback are welcome. Please feel free to open i
 ### License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
->>>>>>> new-branch
