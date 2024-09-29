@@ -2,7 +2,6 @@ import pandas as pd
 from fredapi import Fred
 from datetime import datetime
 import logging
-import json
 import yfinance as yf
 
 
